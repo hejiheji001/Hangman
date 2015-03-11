@@ -46,32 +46,98 @@ var hangman = {
 		}
 		xmlhttp.send((typeof(details.data) != 'undefined') ? details.data : null);
 	},
-	makeRequest: function(data, onloadCallback){
+	waitThenCall: function(waitWhat, callWhat, retryIn, timeout){
+		var st = 0;
+		var target = waitWhat();
+		var waiting = self.setInterval(function(){
+			st++;
+			if(target){
+				clearInterval(waiting);
+				callWhat();
+			}
+			if(st >= ((timeout || 10000) / (retryIn || 100))){
+				clearInterval(waiting);
+			}
+			target = waitWhat();
+		},retryIn || 100);
+	},
+	makeRequest: function(data){
 		var details = {};
-		details.url = this.userInfo.url;
+		details.url = this.userInfo["url"];
 		details.method = "POST";
 		details.headers = {
 			"Content-Type":"application/json"
 		};
-		details.data = data
-		details.onload = onloadCallback;
+		details.data = data;
+		details.onload = function(response){
+			var thisAction = JSON.parse(this.data)["action"];
+			if(response.responseText){
+				var jsonResult = JSON.parse(response.responseText);
+				hangman.userInfo["sessionId"] = jsonResult["sessionId"];
+				hangman.results[thisAction] = jsonResult["data"];
+				hangman.results["status"] = "OK";
+			}
+		},
 		details.onerror =  function(response) {
 			if(window.console){
 				console.log(response);
 			}
+			hangman.results["status"] = "ERROR";
 		};
-		//console.log(JSON.stringify(details));
+
 		this.ajax(details);
 	},
 	startGame: function(){
-		var data = {'playerId': this.userInfo.id,'action': 'startGame'};
-		var onloadCallback = function(response){
-			console.log(response.responseText);
-		};
-		this.makeRequest(JSON.stringify(data), onloadCallback);
+		var action = "startGame";
+		var data = {"playerId": this.userInfo["id"],"action": action};
+		this.makeRequest(JSON.stringify(data));
+		this.waitThenCall(
+			function(){
+				return hangman.results["status"] == "OK";
+			},
+			function(){
+				hangman.nextWord();
+			}
+		)
+	},
+	nextWord: function(){
+		var action = "nextWord";
+		var data = {"sessionId": this.userInfo["sessionId"],"action": action};
+		this.makeRequest(JSON.stringify(data));
+		this.waitThenCall(
+			function(){
+				return hangman.results["status"] == "OK";
+			},
+			function(){
+				console.log(hangman.results[action]);
+			}
+		)
+	},
+	guessWord: function(){
+		// var action = "guessWord";
+		// var data = {"sessionId": this.userInfo["sessionId"],"action": action};
+		// this.makeRequest(JSON.stringify(data));
+		// this.waitThenCall(
+		// 	function(){
+		// 		return hangman.results["status"] == "OK";
+		// 	},
+		// 	function(){
+		// 		console.log(hangman.results[action]);
+		// 	}
+		// )
 	},
 	userInfo: {
 		url: "https://strikingly-hangman.herokuapp.com/game/on",
-		id: "hejiheji001@icloud.com"
-	}
+		id: "hejiheji001@icloud.com",
+		sessionId: ""
+	},
+	results: {
+		status: "",
+		startGame: {},
+		nextWord: {},
+		guessWord: {},
+		getResult: {},
+		submitResult: {}
+	},
+
 }
