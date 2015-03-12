@@ -100,20 +100,27 @@ var hangman = {
 		}
 		return diff;
 	},
-	getNextChar: function(firstTime){
+	getNextChar: function(){
 		var wordLength = hangman.results["nextWord"]["word"].length;
-		hangman.charMap["index"]++;
-		if(firstTime){
-			return hangman.charMap[wordLength][0];
-		}else{
-			var wrongs = hangman.results["guessWord"]["wrongGuessCountOfCurrentWord"];;
-			if(wrongs > 0){
-				var index = hangman.charMap["index"];
-				return hangman.charMap[wordLength][index];
-			}else{
+		var word = {};
+		var oldWord = this.gameInfo["word"];
+		var oldWordStr = "";
+		var newWord = hangman.results["guessWord"]["word"] || "********************";
+		var bestFit = false;
+		for (var i = 0; i < wordLength; i++) {
+			oldWordStr += oldWord[i] || "";
+			word[i] = newWord.charAt(i);
+		};
 
-			}
+		if(oldWordStr != "" && oldWordStr != newWord){
+			console.log("CORRECT");
+			thisChar = "0";
+		}else{
+			thisChar =hangman.charMap[wordLength][hangman.charMap["index"]];
 		}
+		hangman.charMap["index"]++;
+		this.gameInfo["word"] = word;
+		return thisChar ;
 	},
 	extraNextChar: function(wordLength){
 		var extraChars = hangman.charMapFull["extraChars"];
@@ -153,13 +160,13 @@ var hangman = {
 				return hangman.results["status"] == "OK";
 			},
 			function(){
-				hangman.guessWord(true);
+				hangman.guessWord();
 			}
 		);
 	},
-	guessWord: function(firstTime){
+	guessWord: function(){
 		var action = "guessWord";
-		var data = {"sessionId": this.gameInfo["sessionId"],"action": action, "guess": this.getNextChar(firstTime)};
+		var data = {"sessionId": this.gameInfo["sessionId"],"action": action, "guess": this.getNextChar()};
 		console.log(data);
 		this.makeRequest(JSON.stringify(data));
 		this.waitThenCall(
@@ -174,7 +181,7 @@ var hangman = {
 					}
 					hangman.getResult();
 				}else{
-					hangman.guessWord(false);
+					hangman.guessWord();
 				}
 			}
 		);
@@ -209,7 +216,7 @@ var hangman = {
 		url: "https://strikingly-hangman.herokuapp.com/game/on",
 		id: "hejiheji001@icloud.com",
 		sessionId: "",
-		strategyStep: 1
+		word: {}
 	},
 	results: {
 		status: "",
