@@ -102,15 +102,17 @@ var hangman = {
 	},
 	getNextChar: function(firstTime){
 		var wordLength = hangman.results["nextWord"]["word"].length;
+		hangman.charMap["index"]++;
 		if(firstTime){
-			hangman.charMap["index"]++;
 			return hangman.charMap[wordLength][0];
 		}else{
-			var index = hangman.charMap["index"];
-			var thisChar = hangman.charMap[wordLength][index];
 			var wrongs = hangman.results["guessWord"]["wrongGuessCountOfCurrentWord"];;
-			hangman.charMap["index"]++;
-			return thisChar;
+			if(wrongs > 0){
+				var index = hangman.charMap["index"];
+				return hangman.charMap[wordLength][index];
+			}else{
+
+			}
 		}
 	},
 	extraNextChar: function(wordLength){
@@ -242,7 +244,6 @@ var hangman = {
 		extraChars: [],
 		delFrmExt: []
 	},
-	// THERE : 5
 	charMap: {
 		"1": ["A", "I"],
 		"2": ["A", "O", "E", "I", "U", "M", "B", "H"],
@@ -265,5 +266,27 @@ var hangman = {
 		"19": ["I", "E", "A"],
 		"20": ["I", "E"],
 		index: 0
+	},
+	words:{
+		"1": [],
+		"2": [],
+		"3": [],
+		"4": [],
+		"5": [],
+		"6": [],
+		"7": [],
+		"8": [],
+		"9": [],
+		"10": [],
+		"11": [],
+		"12": [],
+		"13": [],
+		"14": [],
+		"15": [],
+		"16": [],
+		"17": [],
+		"18": [],
+		"19": [],
+		"20": []
 	}
 };
