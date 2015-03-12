@@ -64,7 +64,7 @@ var hangman = {
 	makeRequest: function(data){
 		hangman.results["status"] = "PENDING";
 		var details = {};
-		details.url = this.userInfo["url"];
+		details.url = this.gameInfo["url"];
 		details.method = "POST";
 		details.headers = {
 			"Content-Type":"application/json"
@@ -74,7 +74,7 @@ var hangman = {
 			var thisAction = JSON.parse(this.data)["action"];
 			if(response.responseText){
 				var jsonResult = JSON.parse(response.responseText);
-				hangman.userInfo["sessionId"] = jsonResult["sessionId"];
+				hangman.gameInfo["sessionId"] = jsonResult["sessionId"];
 				hangman.results[thisAction] = jsonResult["data"];
 				hangman.results["status"] = "OK";
 			}
@@ -100,14 +100,18 @@ var hangman = {
 		}
 		return diff;
 	},
-	getNextChar: function(){
+	getNextChar: function(firstTime){
 		var wordLength = hangman.results["nextWord"]["word"].length;
-		var thisChar = hangman.charMap[wordLength][hangman.charMap["index"]];
-		if(!thisChar){
-			thisChar = this.extraNextChar(wordLength);
+		if(firstTime){
+			hangman.charMap["index"]++;
+			return hangman.charMap[wordLength][0];
+		}else{
+			var index = hangman.charMap["index"];
+			var thisChar = hangman.charMap[wordLength][index];
+			var wrongs = hangman.results["guessWord"]["wrongGuessCountOfCurrentWord"];;
+			hangman.charMap["index"]++;
+			return thisChar;
 		}
-		hangman.charMap["index"]++;
-		return thisChar;
 	},
 	extraNextChar: function(wordLength){
 		var extraChars = hangman.charMapFull["extraChars"];
@@ -127,7 +131,7 @@ var hangman = {
 	},
 	startGame: function(){
 		var action = "startGame";
-		var data = {"playerId": this.userInfo["id"],"action": action};
+		var data = {"playerId": this.gameInfo["id"],"action": action};
 		this.makeRequest(JSON.stringify(data));
 		this.waitThenCall(
 			function(){
@@ -140,20 +144,20 @@ var hangman = {
 	},
 	nextWord: function(){
 		var action = "nextWord";
-		var data = {"sessionId": this.userInfo["sessionId"],"action": action};
+		var data = {"sessionId": this.gameInfo["sessionId"],"action": action};
 		this.makeRequest(JSON.stringify(data));
 		this.waitThenCall(
 			function(){
 				return hangman.results["status"] == "OK";
 			},
 			function(){
-				hangman.guessWord();
+				hangman.guessWord(true);
 			}
 		);
 	},
-	guessWord: function(){
+	guessWord: function(firstTime){
 		var action = "guessWord";
-		var data = {"sessionId": this.userInfo["sessionId"],"action": action, "guess": this.getNextChar()};
+		var data = {"sessionId": this.gameInfo["sessionId"],"action": action, "guess": this.getNextChar(firstTime)};
 		console.log(data);
 		this.makeRequest(JSON.stringify(data));
 		this.waitThenCall(
@@ -168,14 +172,14 @@ var hangman = {
 					}
 					hangman.getResult();
 				}else{
-					hangman.guessWord();
+					hangman.guessWord(false);
 				}
 			}
 		);
 	},
 	getResult: function(){
 		var action = "getResult";
-		var data = {"sessionId": this.userInfo["sessionId"],"action": action};
+		var data = {"sessionId": this.gameInfo["sessionId"],"action": action};
 		this.makeRequest(JSON.stringify(data));
 		this.waitThenCall(
 			function(){
@@ -188,7 +192,7 @@ var hangman = {
 	},
 	submitResult: function(){
 		var action = "getResult";
-		var data = {"sessionId": this.userInfo["sessionId"],"action": action};
+		var data = {"sessionId": this.gameInfo["sessionId"],"action": action};
 		this.makeRequest(JSON.stringify(data));
 		this.waitThenCall(
 			function(){
@@ -199,10 +203,11 @@ var hangman = {
 			}
 		);
 	},
-	userInfo: {
+	gameInfo: {
 		url: "https://strikingly-hangman.herokuapp.com/game/on",
 		id: "hejiheji001@icloud.com",
-		sessionId: ""
+		sessionId: "",
+		strategyStep: 1
 	},
 	results: {
 		status: "",
