@@ -79,7 +79,7 @@ var hangman = {
 		};
 		this.ajax(details);
 	},
-	makeRequest: function(data){
+	makeRequest: function(data, callback){
 		hangman.results["status"] = "PENDING";
 		var details = {};
 		details.url = this.gameInfo["url"];
@@ -95,6 +95,8 @@ var hangman = {
 				hangman.gameInfo["sessionId"] = jsonResult["sessionId"];
 				hangman.results[thisAction] = jsonResult["data"];
 				hangman.results["status"] = "OK";
+				console.log(jsonResult.data);
+				callback();
 			}
 		},
 		details.onerror = function(response) {
@@ -121,9 +123,12 @@ var hangman = {
 	getNextChar: function(){
 		var wordLength = hangman.results["nextWord"]["word"].length;
 		var word = hangman.results["guessWord"]["word"] || hangman.results["nextWord"]["word"];
-
+		// var wongs = hangman.results["guessWord"]["word"] || hangman.results["nextWord"]["wrongGuessCountOfCurrentWord"];
 		//当前长度的全部单词字符串
-		var allWords = hangman.gameInfo["allWords"] || hangman.words[wordLength];
+		var allWords = hangman.gameInfo["allWords"];
+
+		console.log(wordLength + "LENGTH");
+		console.log(hangman.words[wordLength] + "INITWD");
 
 		//当前已知的位置及对应字母
 		var charKnown = {};
@@ -167,18 +172,19 @@ var hangman = {
 				max = times;
 				thisChar = key;
 			}else if(times == max){//TODO：当times相等的时候 需要根据charMap/charMapFull选择
-				thisChar = key;
+
 			}
 		}
 
 		this.gameInfo["guessed"].push(thisChar);
 		hangman.gameInfo["allWords"] = allWords;
-
 		// var matchedWDs = [];
 		// var charKnown = [];
 		// var charKnownPos = [];
+		// console.log(matchedStr.length < 100 ? matchedStr : matchedStr.length);
+		console.log(JSON.stringify(hangman.chars));
+		console.log("Guess:" + thisChar);
 
-		console.log(matchedStr.length < 100 ? matchedStr : matchedStr.length);
 
 		// if(charKnown.length === 0){
 		// 	thisChar = hangman.charMap[wordLength][hangman.charMap["index"]];
@@ -247,86 +253,101 @@ var hangman = {
 	startGame: function(){
 		var action = "startGame";
 		var data = {"playerId": this.gameInfo["id"],"action": action};
-		this.makeRequest(JSON.stringify(data));
-		this.waitThenCall(
-			function(){
-				return hangman.results["status"] == "OK";
-			},
-			function(){
-				hangman.nextWord();
-			}
-		);
+		var callback = function(){
+			hangman.nextWord();
+		}
+		this.makeRequest(JSON.stringify(data), callback);
+		// this.waitThenCall(
+		// 	function(){
+		// 		return true || hangman.results["status"] == "OK";
+		// 	},
+		// 	function(){
+		// 		hangman.nextWord();
+		// 	}
+		// );
 	},
 	nextWord: function(){
 		var action = "nextWord";
 		var data = {"sessionId": this.gameInfo["sessionId"],"action": action};
-		this.makeRequest(JSON.stringify(data));
-		this.waitThenCall(
-			function(){
-				return hangman.results["status"] == "OK";
-			},
-			function(){
-				var wordLength = hangman.results[action]["word"].length
-				var wordArr = hangman.words["wordArr"];
-				for (var k = 0; k < wordArr.length; k++) {
-					var temp = wordArr[k].trim();
-					if(temp.length === wordLength){
-						hangman.words[wordLength].push(temp);
-					}
+		var callback = function(){
+			var wordLength = hangman.results[action]["word"].length
+			var wordArr = hangman.words["wordArr"];
+			for (var k = 0; k < wordArr.length; k++) {
+				var temp = wordArr[k].trim();
+				if(temp.length === wordLength){
+					hangman.words[wordLength].push(temp);
 				}
-				hangman.guessWord();
 			}
-		);
+			hangman.gameInfo["allWords"] = hangman.words[wordLength];
+			hangman.guessWord();
+		}
+
+		this.makeRequest(JSON.stringify(data), callback);
+		// this.waitThenCall(
+		// 	function(){
+		// 		return true || hangman.results["status"] == "OK";
+		// 	},
+		// 	function(){
+		// 		callback();
+		// 	}
+		// );
 	},
 	guessWord: function(){
 		var action = "guessWord";
 		var data = {"sessionId": this.gameInfo["sessionId"],"action": action, "guess": this.getNextChar()};
-		console.log(data);
-		this.makeRequest(JSON.stringify(data));
-		this.waitThenCall(
-			function(){
-				return hangman.results["status"] == "OK";
-			},
-			function(){
-				console.log(hangman.results[action]);
-				if(hangman.results[action]["word"].indexOf("*") == -1){
-					if(hangman.results[action]["totalWordCount"] < hangman.results["startGame"]["numberOfWordsToGuess"]){
-						console.log(hangman.results[action]["totalWordCount"] + "Word");
-						hangman.clearCache();
-						hangman.nextWord();
-					}
-					hangman.getResult();
-				}else{
-					hangman.guessWord();
+		var callback = function(){
+			if(hangman.results[action]["word"].indexOf("*") == -1){
+				if(hangman.results[action]["totalWordCount"] < hangman.results["startGame"]["numberOfWordsToGuess"]){
+					console.log(hangman.results[action]["totalWordCount"] + "Word");
+					hangman.clearCache();
+					hangman.nextWord();
 				}
+				hangman.getResult();
+			}else{
+				hangman.guessWord();
 			}
-		);
+		}
+		this.makeRequest(JSON.stringify(data), callback);
+		// this.waitThenCall(
+		// 	function(){
+		// 		return true || hangman.results["status"] == "OK";
+		// 	},
+		// 	function(){
+		// 		callback();
+		// 	}
+		// );
 	},
 	getResult: function(){
 		var action = "getResult";
 		var data = {"sessionId": this.gameInfo["sessionId"],"action": action};
-		this.makeRequest(JSON.stringify(data));
-		this.waitThenCall(
-			function(){
-				return hangman.results["status"] == "OK";
-			},
-			function(){
-				console.log(hangman.results[action]);
-			}
-		);
+		var callback = function(){
+			console.log(hangman.results[action]);
+		}
+		this.makeRequest(JSON.stringify(data), callback);
+		// this.waitThenCall(
+		// 	function(){
+		// 		return true || hangman.results["status"] == "OK";
+		// 	},
+		// 	function(){
+		// 		console.log(hangman.results[action]);
+		// 	}
+		// );
 	},
 	submitResult: function(){
 		var action = "getResult";
 		var data = {"sessionId": this.gameInfo["sessionId"],"action": action};
-		this.makeRequest(JSON.stringify(data));
-		this.waitThenCall(
-			function(){
-				return hangman.results["status"] == "OK";
-			},
-			function(){
-				console.log(hangman.results[action]);
-			}
-		);
+		var callback = function(){
+			console.log(hangman.results[action]);
+		}
+		this.makeRequest(JSON.stringify(data), callback);
+		// this.waitThenCall(
+		// 	function(){
+		// 		return true || hangman.results["status"] == "OK";
+		// 	},
+		// 	function(){
+		// 		console.log(hangman.results[action]);
+		// 	}
+		// );
 	},
 	clearCache:function(){
 		// hangman.results["status"] = "PENDING";
