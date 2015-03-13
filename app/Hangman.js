@@ -132,10 +132,22 @@ var hangman = {
 
 		//当前已知的位置及对应字母
 		var charKnown = {};
+		var num = 0;
 		for (var m = 0; m < wordLength; m++) {
 			if(word.charAt(m) !== "*"){
 				charKnown[m] = word.charAt(m);
+				num++;
 			}
+		}
+
+		console.log(num + "KNOWN");
+
+		if(num === 0 && wordLength <= 20){
+			thisChar = hangman.charMap[wordLength][hangman.charMap["index"]];
+			hangman.charMap["index"]++;
+			console.log("Guess:" + thisChar);
+			this.gameInfo["guessed"].push(thisChar);
+			return thisChar;
 		}
 
 		//去掉全部单词中模式不匹配的单词
@@ -408,29 +420,29 @@ var hangman = {
 	// 	extraChars: [],
 	// 	delFrmExt: []
 	// },
-	// charMap: {
-	// 	"1": ["A", "I"],
-	// 	"2": ["A", "O", "E", "I", "U", "M", "B", "H"],
-	// 	"3": ["A", "E", "O", "I", "U", "Y", "H", "B", "C", "K"],
-	// 	"4": ["A", "E", "O", "I", "U", "Y", "S", "B", "F"],
-	// 	"5": ["S", "E", "A", "O", "I", "U", "Y", "H"],
-	// 	"6": ["E", "A", "I", "O", "U", "S", "Y"],
-	// 	"7": ["E", "I", "A", "O", "U", "S"],
-	// 	"8": ["E", "I", "A", "O", "U"],
-	// 	"9": ["E", "I", "A", "O", "U"],
-	// 	"10": ["E", "I", "O", "A", "U"],
-	// 	"11": ["E", "I", "O", "A", "D"],
-	// 	"12": ["E", "I", "O", "A", "F"],
-	// 	"13": ["I", "E", "O", "A"],
-	// 	"14": ["I", "E", "O"],
-	// 	"15": ["I", "E", "A"],
-	// 	"16": ["I", "E", "H"],
-	// 	"17": ["I", "E", "R"],
-	// 	"18": ["I", "E", "A"],
-	// 	"19": ["I", "E", "A"],
-	// 	"20": ["I", "E"],
-	// 	index: 0
-	// },
+	charMap: {
+		"1": ["A", "I"],
+		"2": ["A", "O", "E", "I", "U", "M", "B", "H"],
+		"3": ["A", "E", "O", "I", "U", "Y", "H", "B", "C", "K"],
+		"4": ["A", "E", "O", "I", "U", "Y", "S", "B", "F"],
+		"5": ["S", "E", "A", "O", "I", "U", "Y", "H"],
+		"6": ["E", "A", "I", "O", "U", "S", "Y"],
+		"7": ["E", "I", "A", "O", "U", "S"],
+		"8": ["E", "I", "A", "O", "U"],
+		"9": ["E", "I", "A", "O", "U"],
+		"10": ["E", "I", "O", "A", "U"],
+		"11": ["E", "I", "O", "A", "D"],
+		"12": ["E", "I", "O", "A", "F"],
+		"13": ["I", "E", "O", "A"],
+		"14": ["I", "E", "O"],
+		"15": ["I", "E", "A"],
+		"16": ["I", "E", "H"],
+		"17": ["I", "E", "R"],
+		"18": ["I", "E", "A"],
+		"19": ["I", "E", "A"],
+		"20": ["I", "E"],
+		index: 0
+	},
 	words:{
 		"1": [],
 		"2": [],
