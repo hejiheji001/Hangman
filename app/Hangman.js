@@ -80,7 +80,6 @@ var hangman = {
 		this.ajax(details);
 	},
 	makeRequest: function(data, callback){
-		hangman.results["status"] = "PENDING";
 		var details = {};
 		details.url = this.gameInfo["url"];
 		details.method = "POST";
@@ -103,7 +102,6 @@ var hangman = {
 			if(window.console){
 				console.log(response);
 			}
-			hangman.results["status"] = "ERROR";
 		}
 		this.ajax(details);
 	},
@@ -123,12 +121,9 @@ var hangman = {
 	getNextChar: function(){
 		var wordLength = hangman.results["nextWord"]["word"].length;
 		var word = hangman.results["guessWord"]["word"] || hangman.results["nextWord"]["word"];
-		// var wongs = hangman.results["guessWord"]["word"] || hangman.results["nextWord"]["wrongGuessCountOfCurrentWord"];
+
 		//当前长度的全部单词字符串
 		var allWords = hangman.gameInfo["allWords"];
-
-		// console.log(wordLength + "LENGTH");
-		// console.log(hangman.words[wordLength] + "INITWD");
 
 		//当前已知的位置及对应字母
 		var charKnown = {};
@@ -140,7 +135,6 @@ var hangman = {
 			}
 		}
 
-		console.log(num + " KNOWN");
 		console.log("allwds " + (allWords.length < 50 ? allWords : allWords.length));
 
 		if(num === 0 && wordLength <= 20){
@@ -191,88 +185,24 @@ var hangman = {
 		}
 
 		if(max === 1){
-			console.log(thisChar + "==XXXXX");
-			console.log(matchedStr + " ALL 1");
 			var guessChars = hangman.charMapFull[wordLength];
-			for (var i = 0; i < guessChars.length; i++) {
-				if(matchedStr.indexOf(guessChars[i]) > -1){
-					thisChar = guessChars[i];
+			for (var n = 0; n < guessChars.length; n++) {
+				if(matchedStr.indexOf(guessChars[n]) > -1){
+					thisChar = guessChars[n];
 					break;
 				}
-			};
-			console.log(thisChar + "==YYYYY");
-		}
-
-		var guessed  = this.gameInfo["guessed"].join("");
-		if(guessed.indexOf(thisChar) > -1){
-
+			}
 		}
 
 		this.gameInfo["guessed"].push(thisChar);
 		hangman.gameInfo["allWords"] = matched;
-		// var matchedWDs = [];
-		// var charKnown = [];
-		// var charKnownPos = [];
-		console.log(matchedStr.length < 100 ? matchedStr : matchedStr.length);
-		// console.log(JSON.stringify(hangman.chars));
 		console.log("Guess:" + thisChar + " Times:" + max);
-
-
-		// if(charKnown.length === 0){
-		// 	thisChar = hangman.charMap[wordLength][hangman.charMap["index"]];
-		// }else{
-		// 	for (var k = 0; k < allWords.length; k++) {
-		// 		var temp = allWords[k];
-		// 		var index = 0;
-		// 		for (var n = 0; n < charKnownPos.length; n++) {
-		// 			if(temp.charAt(charKnownPos[n]) == charKnown){
-		// 				index++;
-		// 			}
-		// 		}
-		// 		if(index == charKnownPos.length){
-		// 			matchedWDs.push(temp);
-		// 		}
-		// 	}
-		// 	var matchedWDStr = matchedWDs.join("");
-		// 	var guessed = this.gameInfo["guessed"];
-		// 	for (var i = 0; i < guessed.length; i++) {
-		// 		matchedWDStr = matchedWDStr.split(guessed[i]).join("");
-		// 	};
-
-		// 	var max = 0;
-		// 	for(var key in hangman.chars){
-		// 		var times = matchedWDStr.split(key).length - 1;
-		// 		hangman.chars[key] = times;
-		// 		if(times > max){
-		// 			max = times;
-		// 			thisChar = key;
-		// 		}
-		// 	}
-		// }
-		// hangman.charMap["index"]++;
-		// this.gameInfo["word"] = word;
-		// this.gameInfo["guessed"].push(thisChar);
 		return thisChar ;
-	},
-	extraNextChar: function(wordLength){
-		var extraChars = hangman.charMapFull["extraChars"];
-		if(extraChars.length === 0){
-			var usedChars = hangman.charMap[wordLength];
-			var allChars = hangman.charMapFull[wordLength];
-			extraChars = this.leftMinusRight(allChars, usedChars);
-			hangman.charMapFull["extraChars"] = extraChars;
-		}else{
-			extraChars = this.leftMinusRight(extraChars, hangman.charMapFull["delFrmExt"]);
-		}
-		var thisChar = extraChars[0];
-		var delFrmExt = hangman.charMapFull["delFrmExt"];
-		delFrmExt.push(thisChar)
-		hangman.charMapFull["delFrmExt"] = delFrmExt;
-		return thisChar;
 	},
 	initGame: function(){
 		this.clearCache();
 		this.loadWords("/words.txt");
+		this.loadDic();
 		this.waitThenCall(
 			function(){
 				return hangman.words["loaded"] == "TRUE";
@@ -289,14 +219,6 @@ var hangman = {
 			hangman.nextWord();
 		}
 		this.makeRequest(JSON.stringify(data), callback);
-		// this.waitThenCall(
-		// 	function(){
-		// 		return true || hangman.results["status"] == "OK";
-		// 	},
-		// 	function(){
-		// 		hangman.nextWord();
-		// 	}
-		// );
 	},
 	nextWord: function(){
 		var action = "nextWord";
@@ -313,21 +235,19 @@ var hangman = {
 						allWords.push(temp);
 					}
 				}
+
+				// 附带另一个6.5M的字典文件
+				// for (x in dictionary){
+				// 	if (dictionary[x].length === wordLength){
+				// 		allWords.push(dictionary[x].toUpperCase());
+				// 	}
+				// }
 			}
 			hangman.clearCache();
-			// }
 			hangman.gameInfo["allWords"] = allWords;
 			hangman.guessWord();
 		}
 		this.makeRequest(JSON.stringify(data), callback);
-		// this.waitThenCall(
-		// 	function(){
-		// 		return true || hangman.results["status"] == "OK";
-		// 	},
-		// 	function(){
-		// 		callback();
-		// 	}
-		// );
 	},
 	guessWord: function(){
 		var action = "guessWord";
@@ -338,7 +258,10 @@ var hangman = {
 					console.log("Hit. Change Word");
 					hangman.nextWord();
 				}else if(hangman.results[action]["wrongGuessCountOfCurrentWord"] == 10){
-					console.log("Failed. Change Word");
+					console.warn("Failed. Change Word");
+					var out = "Failed in [" + hangman.results[action]["word"] + "]";
+					out += " Guessd: [" + hangman.gameInfo["guessed"] +"]"
+					document.getElementById("out").innerHTML += out + "<br/>";
 					hangman.nextWord();
 				}else{
 					hangman.guessWord();
@@ -346,18 +269,8 @@ var hangman = {
 			}else{
 				alert("All Done");
 			}
-
-			hangman.getResult();
 		}
 		this.makeRequest(JSON.stringify(data), callback);
-		// this.waitThenCall(
-		// 	function(){
-		// 		return true || hangman.results["status"] == "OK";
-		// 	},
-		// 	function(){
-		// 		callback();
-		// 	}
-		// );
 	},
 	getResult: function(){
 		var action = "getResult";
@@ -366,51 +279,21 @@ var hangman = {
 			console.log(hangman.results[action]);
 		}
 		this.makeRequest(JSON.stringify(data), callback);
-		// this.waitThenCall(
-		// 	function(){
-		// 		return true || hangman.results["status"] == "OK";
-		// 	},
-		// 	function(){
-		// 		console.log(hangman.results[action]);
-		// 	}
-		// );
 	},
 	submitResult: function(){
-		var action = "getResult";
+		var action = "submitResult";
 		var data = {"sessionId": this.gameInfo["sessionId"],"action": action};
 		var callback = function(){
 			console.log(hangman.results[action]);
 		}
 		this.makeRequest(JSON.stringify(data), callback);
-		// this.waitThenCall(
-		// 	function(){
-		// 		return true || hangman.results["status"] == "OK";
-		// 	},
-		// 	function(){
-		// 		console.log(hangman.results[action]);
-		// 	}
-		// );
 	},
 	clearCache:function(){
 		hangman.results["guessWord"]["word"] = "";
 		hangman.charMap["index"] = 0;
-		// // hangman.results["status"] = "PENDING";
 		hangman.gameInfo["allWords"] = "";
 		hangman.gameInfo["matched"] = [];
 		hangman.gameInfo["guessed"] = [];
-		// var wds = this.words;
-		// for(var key in wds){
-		// 	wds[key] = [];
-		// }
-		// this.words["loaded"] = "FALSE";
-		// // this.words["wordArr"] = [];
-
-		// var chs = this.chars;
-		// for(var key in chs){
-		// 	chs[key] = 0;
-		// }
-		// this.results["guessWord"]["word"] = "";
-		// this.charMap["index"] = 0;
 	},
 	gameInfo: {
 		url: "https://strikingly-hangman.herokuapp.com/game/on",
