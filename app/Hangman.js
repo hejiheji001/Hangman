@@ -141,6 +141,7 @@ var hangman = {
 		}
 
 		console.log(num + " KNOWN");
+		console.log("allwds " + (allWords.length < 50 ? allWords : allWords.length));
 
 		if(num === 0 && wordLength <= 20){
 			thisChar = hangman.charMap[wordLength][hangman.charMap["index"]];
@@ -186,10 +187,27 @@ var hangman = {
 				max = times;
 				thisChar = key;
 				hangman.chars[key] = times;
-			}else if(times == max){//TODO：当times相等的时候 需要根据charMap/charMapFull选择
-				equalTimes.push(key);
 			}
 		}
+
+		if(max === 1){
+			console.log(thisChar + "==XXXXX");
+			console.log(matchedStr + " ALL 1");
+			var guessChars = hangman.charMapFull[wordLength];
+			for (var i = 0; i < guessChars.length; i++) {
+				if(matchedStr.indexOf(guessChars[i]) > -1){
+					thisChar = guessChars[i];
+					break;
+				}
+			};
+			console.log(thisChar + "==YYYYY");
+		}
+
+		var guessed  = this.gameInfo["guessed"].join("");
+		if(guessed.indexOf(thisChar) > -1){
+
+		}
+
 		this.gameInfo["guessed"].push(thisChar);
 		hangman.gameInfo["allWords"] = matched;
 		// var matchedWDs = [];
@@ -197,7 +215,7 @@ var hangman = {
 		// var charKnownPos = [];
 		console.log(matchedStr.length < 100 ? matchedStr : matchedStr.length);
 		// console.log(JSON.stringify(hangman.chars));
-		console.log("Guess:" + thisChar + " Times:" + max + " equalTimes:" + equalTimes);
+		console.log("Guess:" + thisChar + " Times:" + max);
 
 
 		// if(charKnown.length === 0){
@@ -315,16 +333,21 @@ var hangman = {
 		var action = "guessWord";
 		var data = {"sessionId": this.gameInfo["sessionId"],"action": action, "guess": this.getNextChar()};
 		var callback = function(){
-			if(hangman.results[action]["word"].indexOf("*") == -1){
-				if(hangman.results[action]["totalWordCount"] < hangman.results["startGame"]["numberOfWordsToGuess"]){
-					console.log(hangman.results[action]["totalWordCount"] + "Word");
+			if(hangman.results[action]["totalWordCount"] < hangman.results["startGame"]["numberOfWordsToGuess"]){
+				if(hangman.results[action]["word"].indexOf("*") == -1){
+					console.log("Hit. Change Word");
 					hangman.nextWord();
+				}else if(hangman.results[action]["wrongGuessCountOfCurrentWord"] == 10){
+					console.log("Failed. Change Word");
+					hangman.nextWord();
+				}else{
+					hangman.guessWord();
 				}
-				hangman.getResult();
 			}else{
-				// hangman.gameInfo["allWords"]
-				hangman.guessWord();
+				alert("All Done");
 			}
+
+			hangman.getResult();
 		}
 		this.makeRequest(JSON.stringify(data), callback);
 		// this.waitThenCall(
@@ -405,31 +428,31 @@ var hangman = {
 		getResult: {},
 		submitResult: {}
 	},
-	// charMapFull:{
-	// 	"1": ["A", "I"],
-	// 	"2": ["A", "O", "E", "I", "M", "H", "N", "U", "S", "T", "Y", "B", "L", "P", "X", "D", "F", "R", "W", "G", "J", "K"],
-	// 	"3": ["A", "E", "O", "I", "T", "S", "U", "P", "R", "N", "D", "B", "G", "M", "Y", "L", "H", "W", "F", "C", "K", "X", "V", "J", "Z", "Q"],
-	// 	"4": ["A", "E", "S", "O", "I", "R", "L", "T", "N", "U", "D", "P", "M", "H", "C", "B", "K", "G", "Y", "W", "F", "V", "J", "Z", "X", "Q"],
-	// 	"5": ["S", "E", "A", "R", "O", "I", "L", "T", "N", "U", "D", "C", "Y", "P", "M", "H", "G", "B", "K", "F", "W", "V", "Z", "X", "J", "Q"],
-	// 	"6": ["E", "S", "A", "R", "I", "O", "L", "N", "T", "D", "U", "C", "M", "P", "G", "H", "B", "Y", "K", "F", "W", "V", "Z", "X", "J", "Q"],
-	// 	"7": ["E", "S", "I", "A", "R", "N", "T", "O", "L", "D", "U", "C", "G", "P", "M", "H", "B", "Y", "F", "K", "W", "V", "Z", "X", "J", "Q"],
-	// 	"8": ["E", "S", "I", "A", "R", "N", "T", "O", "L", "D", "C", "U", "G", "M", "P", "H", "B", "Y", "F", "K", "W", "V", "Z", "X", "Q", "J"],
-	// 	"9": ["E", "S", "I", "R", "A", "N", "T", "O", "L", "C", "D", "U", "G", "M", "P", "H", "B", "Y", "F", "V", "K", "W", "Z", "X", "Q", "J"],
-	// 	"10": ["E", "I", "S", "R", "A", "N", "T", "O", "L", "C", "D", "U", "G", "M", "P", "H", "B", "Y", "F", "V", "K", "W", "Z", "X", "Q", "J"],
-	// 	"11": ["E", "I", "S", "N", "A", "R", "T", "O", "L", "C", "U", "D", "P", "M", "G", "H", "B", "Y", "F", "V", "K", "W", "Z", "X", "Q", "J"],
-	// 	"12": ["E", "I", "S", "N", "T", "A", "R", "O", "L", "C", "P", "U", "M", "D", "G", "H", "Y", "B", "V", "F", "Z", "K", "W", "X", "Q", "J"],
-	// 	"13": ["I", "E", "N", "T", "S", "A", "O", "R", "L", "C", "P", "U", "M", "G", "D", "H", "Y", "B", "V", "F", "Z", "X", "K", "W", "Q", "J"],
-	// 	"14": ["I", "E", "T", "S", "N", "A", "O", "R", "L", "C", "P", "U", "M", "D", "H", "G", "Y", "B", "V", "F", "Z", "X", "K", "W", "Q", "J"],
-	// 	"15": ["I", "E", "T", "N", "S", "O", "A", "R", "L", "C", "P", "U", "M", "D", "H", "G", "Y", "B", "V", "F", "Z", "X", "W", "K", "Q", "J"],
-	// 	"16": ["I", "E", "T", "S", "N", "A", "O", "R", "L", "C", "P", "U", "M", "H", "D", "Y", "G", "B", "V", "F", "Z", "X", "W", "Q", "K", "J"],
-	// 	"17": ["I", "E", "T", "N", "S", "O", "A", "R", "L", "C", "P", "U", "M", "H", "D", "G", "Y", "B", "V", "F", "Z", "X", "Q", "W", "J", "K"],
-	// 	"18": ["I", "S", "E", "T", "O", "N", "R", "A", "L", "C", "P", "M", "U", "H", "D", "G", "Y", "B", "V", "Z", "F", "X", "Q", "W", "K"],
-	// 	"19": ["I", "E", "T", "O", "N", "A", "S", "R", "L", "C", "P", "M", "U", "H", "D", "G", "Y", "B", "V", "F", "Z", "X", "K", "J", "Q", "W"],
-	// 	"20": ["I", "O", "E", "T", "R", "S", "A", "N", "C", "L", "P", "H", "U", "M", "Y", "D", "G", "B", "Z", "V", "F", "K", "X", "J", "Q"],
-	// 	index: 0,
-	// 	extraChars: [],
-	// 	delFrmExt: []
-	// },
+	charMapFull:{
+		"1": ["A", "I"],
+		"2": ["A", "O", "E", "I", "M", "H", "N", "U", "S", "T", "Y", "B", "L", "P", "X", "D", "F", "R", "W", "G", "J", "K"],
+		"3": ["A", "E", "O", "I", "T", "S", "U", "P", "R", "N", "D", "B", "G", "M", "Y", "L", "H", "W", "F", "C", "K", "X", "V", "J", "Z", "Q"],
+		"4": ["A", "E", "S", "O", "I", "R", "L", "T", "N", "U", "D", "P", "M", "H", "C", "B", "K", "G", "Y", "W", "F", "V", "J", "Z", "X", "Q"],
+		"5": ["S", "E", "A", "R", "O", "I", "L", "T", "N", "U", "D", "C", "Y", "P", "M", "H", "G", "B", "K", "F", "W", "V", "Z", "X", "J", "Q"],
+		"6": ["E", "S", "A", "R", "I", "O", "L", "N", "T", "D", "U", "C", "M", "P", "G", "H", "B", "Y", "K", "F", "W", "V", "Z", "X", "J", "Q"],
+		"7": ["E", "S", "I", "A", "R", "N", "T", "O", "L", "D", "U", "C", "G", "P", "M", "H", "B", "Y", "F", "K", "W", "V", "Z", "X", "J", "Q"],
+		"8": ["E", "S", "I", "A", "R", "N", "T", "O", "L", "D", "C", "U", "G", "M", "P", "H", "B", "Y", "F", "K", "W", "V", "Z", "X", "Q", "J"],
+		"9": ["E", "S", "I", "R", "A", "N", "T", "O", "L", "C", "D", "U", "G", "M", "P", "H", "B", "Y", "F", "V", "K", "W", "Z", "X", "Q", "J"],
+		"10": ["E", "I", "S", "R", "A", "N", "T", "O", "L", "C", "D", "U", "G", "M", "P", "H", "B", "Y", "F", "V", "K", "W", "Z", "X", "Q", "J"],
+		"11": ["E", "I", "S", "N", "A", "R", "T", "O", "L", "C", "U", "D", "P", "M", "G", "H", "B", "Y", "F", "V", "K", "W", "Z", "X", "Q", "J"],
+		"12": ["E", "I", "S", "N", "T", "A", "R", "O", "L", "C", "P", "U", "M", "D", "G", "H", "Y", "B", "V", "F", "Z", "K", "W", "X", "Q", "J"],
+		"13": ["I", "E", "N", "T", "S", "A", "O", "R", "L", "C", "P", "U", "M", "G", "D", "H", "Y", "B", "V", "F", "Z", "X", "K", "W", "Q", "J"],
+		"14": ["I", "E", "T", "S", "N", "A", "O", "R", "L", "C", "P", "U", "M", "D", "H", "G", "Y", "B", "V", "F", "Z", "X", "K", "W", "Q", "J"],
+		"15": ["I", "E", "T", "N", "S", "O", "A", "R", "L", "C", "P", "U", "M", "D", "H", "G", "Y", "B", "V", "F", "Z", "X", "W", "K", "Q", "J"],
+		"16": ["I", "E", "T", "S", "N", "A", "O", "R", "L", "C", "P", "U", "M", "H", "D", "Y", "G", "B", "V", "F", "Z", "X", "W", "Q", "K", "J"],
+		"17": ["I", "E", "T", "N", "S", "O", "A", "R", "L", "C", "P", "U", "M", "H", "D", "G", "Y", "B", "V", "F", "Z", "X", "Q", "W", "J", "K"],
+		"18": ["I", "S", "E", "T", "O", "N", "R", "A", "L", "C", "P", "M", "U", "H", "D", "G", "Y", "B", "V", "Z", "F", "X", "Q", "W", "K"],
+		"19": ["I", "E", "T", "O", "N", "A", "S", "R", "L", "C", "P", "M", "U", "H", "D", "G", "Y", "B", "V", "F", "Z", "X", "K", "J", "Q", "W"],
+		"20": ["I", "O", "E", "T", "R", "S", "A", "N", "C", "L", "P", "H", "U", "M", "Y", "D", "G", "B", "Z", "V", "F", "K", "X", "J", "Q"],
+		index: 0,
+		extraChars: [],
+		delFrmExt: []
+	},
 	charMap: {
 		"1": ["A", "I"],
 		"2": ["A", "O", "E", "I", "U", "M", "B", "H"],
