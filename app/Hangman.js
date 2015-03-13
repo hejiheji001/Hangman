@@ -202,7 +202,6 @@ var hangman = {
 	initGame: function(){
 		this.clearCache();
 		this.loadWords("/words.txt");
-		this.loadDic();
 		this.waitThenCall(
 			function(){
 				return hangman.words["loaded"] == "TRUE";
