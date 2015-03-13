@@ -127,8 +127,8 @@ var hangman = {
 		//当前长度的全部单词字符串
 		var allWords = hangman.gameInfo["allWords"];
 
-		console.log(wordLength + "LENGTH");
-		console.log(hangman.words[wordLength] + "INITWD");
+		// console.log(wordLength + "LENGTH");
+		// console.log(hangman.words[wordLength] + "INITWD");
 
 		//当前已知的位置及对应字母
 		var charKnown = {};
@@ -181,8 +181,8 @@ var hangman = {
 		// var matchedWDs = [];
 		// var charKnown = [];
 		// var charKnownPos = [];
-		// console.log(matchedStr.length < 100 ? matchedStr : matchedStr.length);
-		console.log(JSON.stringify(hangman.chars));
+		console.log(matchedStr.length < 100 ? matchedStr : matchedStr.length);
+		// console.log(JSON.stringify(hangman.chars));
 		console.log("Guess:" + thisChar);
 
 
@@ -272,16 +272,18 @@ var hangman = {
 		var callback = function(){
 			var wordLength = hangman.results[action]["word"].length
 			var wordArr = hangman.words["wordArr"];
-			for (var k = 0; k < wordArr.length; k++) {
-				var temp = wordArr[k].trim();
-				if(temp.length === wordLength){
-					hangman.words[wordLength].push(temp);
+			var allWords = hangman.words[wordLength];
+			if(allWords.length === 0){
+				for (var k = 0; k < wordArr.length; k++) {
+					var temp = wordArr[k].trim();
+					if(temp.length === wordLength){
+						allWords.push(temp);
+					}
 				}
 			}
-			hangman.gameInfo["allWords"] = hangman.words[wordLength];
-			hangman.guessWord();
+			hangman.gameInfo["allWords"] = allWords;
+			//hangman.guessWord();
 		}
-
 		this.makeRequest(JSON.stringify(data), callback);
 		// this.waitThenCall(
 		// 	function(){
@@ -299,7 +301,6 @@ var hangman = {
 			if(hangman.results[action]["word"].indexOf("*") == -1){
 				if(hangman.results[action]["totalWordCount"] < hangman.results["startGame"]["numberOfWordsToGuess"]){
 					console.log(hangman.results[action]["totalWordCount"] + "Word");
-					hangman.clearCache();
 					hangman.nextWord();
 				}
 				hangman.getResult();
@@ -354,13 +355,12 @@ var hangman = {
 		this.gameInfo["allWords"] = "";
 		this.gameInfo["matched"] = [];
 		this.gameInfo["guessed"] = [];
-
-		// var wds = this.words;
-		// for(var key in wds){
-		// 	wds[key] = [];
-		// }
-		// this.words["loaded"] = "FALSE";
-		// this.words["wordArr"] = [];
+		var wds = this.words;
+		for(var key in wds){
+			wds[key] = [];
+		}
+		this.words["loaded"] = "FALSE";
+		this.words["wordArr"] = [];
 
 		var chs = this.chars;
 		for(var key in chs){
